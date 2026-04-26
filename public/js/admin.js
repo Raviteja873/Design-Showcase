@@ -124,7 +124,6 @@ function initAdminDashboard() {
             adminDesignList.appendChild(div);
         });
 
-        // ✅ Attach events AFTER render
         document.querySelectorAll('.edit-btn').forEach(btn => {
             btn.onclick = () => handleEdit(btn.dataset.id);
         });
@@ -155,15 +154,29 @@ function initAdminDashboard() {
     };
 
     // ================= SUBMIT =================
+    // ✅ FIXED ONLY THIS PART
     designForm.onsubmit = async (e) => {
         e.preventDefault();
 
         const id = document.getElementById('designId').value;
-        const formData = new FormData(designForm);
 
-        if (!isEditing && !formData.get('image')) {
+        // ✅ Proper file handling
+        const fileInput = document.getElementById('image');
+        const file = fileInput.files[0];
+
+        if (!isEditing && !file) {
             alert("Image required");
             return;
+        }
+
+        // ✅ Manual FormData
+        const formData = new FormData();
+        formData.append('title', document.getElementById('title').value);
+        formData.append('description', document.getElementById('description').value);
+        formData.append('category', document.getElementById('category').value);
+
+        if (file) {
+            formData.append('image', file);
         }
 
         const url = isEditing ? `/api/designs/${id}` : `/api/designs`;
