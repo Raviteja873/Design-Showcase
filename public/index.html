@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design Showcase - Portfolio</title>
+    <meta name="description" content="Portfolio showcasing modern design works.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <header class="container">
+        <a href="/" class="logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+            My Design Works
+        </a>
+        <nav>
+            <ul style="align-items: center;">
+                <li><a href="#portfolio">Works</a></li>
+                <li><a href="#contact">Contact</a></li>
+                <li><a href="/login.html" style="font-weight: 600; color: var(--accent-color);">Admin</a></li>
+                <li><button class="theme-toggle" id="themeToggle" aria-label="Toggle Theme"
+                        style="margin-left: var(--space-1);">☀️</button></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <h1>Creative Design Showcase</h1>
+            <p>Bringing ideas to life with clean, modern, and elegant visuals.</p>
+        </section>
+
+        <section id="portfolio" class="portfolio">
+            <div class="controls">
+                <h2>My Design Works</h2>
+            </div>
+
+            <div id="portfolioGrid" class="grid">
+                <!-- Cards will be populated by JS -->
+            </div>
+
+            <div id="loading" style="text-align: center; display: none;">Loading...</div>
+        </section>
+
+        <section id="contact" class="hero" style="padding-top: var(--space-6); padding-bottom: var(--space-6);">
+            <h2>Let's Work Together</h2>
+            <p>If you'd like to talk about a project, my inbox is always open. Connect with me below!</p>
+            <div
+                style="display: flex; justify-content: center; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-3);">
+                <a href="mailto:ravitejadasari873@gmail.com" class="btn btn-secondary">Email</a>
+                <a href="https://www.linkedin.com/in/dasari-ravi-teja-210a64259/" target="_blank"
+                    class="btn btn-secondary">LinkedIn</a>
+                <a href="https://github.com/Raviteja873" target="_blank" class="btn btn-secondary">GitHub</a>
+                <a href="https://personal-portfolio-ten-gray-85.vercel.app/" target="_blank"
+                    class="btn btn-secondary">Personal Portfolio</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Design Showcase. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Lightbox Modal -->
+    <div id="lightbox" class="lightbox">
+        <span class="lightbox-close" id="lightboxClose">&times;</span>
+        <button class="lightbox-prev" id="lightboxPrev" aria-label="Previous Design">&#10094;</button>
+        <div class="lightbox-content-wrapper">
+            <div id="lightboxMedia" class="lightbox-media"></div>
+            <div class="lightbox-info">
+                <h3 id="lightboxTitle"></h3>
+                <p id="lightboxDesc"></p>
+            </div>
+        </div>
+        <button class="lightbox-next" id="lightboxNext" aria-label="Next Design">&#10095;</button>
+    </div>
+
+    <script src="/js/main.js"></script>
+</body>
+
+</html>
