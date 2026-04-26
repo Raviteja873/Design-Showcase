@@ -3,12 +3,41 @@ document.addEventListener('DOMContentLoaded', async () => {
     const isLogin = window.location.pathname.endsWith('login.html');
     const isAdmin = window.location.pathname.endsWith('admin.html');
 
-    // LOGIN PAGE
+    // ================= LOGIN PAGE =================
     if (isLogin) {
         document.body.style.display = 'block';
+
+        const form = document.getElementById('loginForm');
+
+        if (form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const username = form.username.value;
+                const password = form.password.value;
+
+                try {
+                    const res = await fetch('/api/login', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password })
+                    });
+
+                    if (res.ok) {
+                        window.location.href = '/admin.html';
+                    } else {
+                        alert('Invalid credentials');
+                    }
+
+                } catch {
+                    alert('Server error');
+                }
+            });
+        }
     }
 
-    // ADMIN PAGE AUTH CHECK
+    // ================= ADMIN PAGE =================
     if (isAdmin) {
         try {
             const res = await fetch('/api/auth/status', {
@@ -25,91 +54,170 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // LOGIN FORM
-    const form = document.getElementById('loginForm');
-    if (form) {
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
+    // ================= LOGOUT =================
+    const logoutBtn = document.getElementById('logoutBtn');
 
-            const username = form.username.value;
-            const password = form.password.value;
-
-            const res = await fetch('/api/login', {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-
-            if (res.ok) {
-                window.location.href = '/admin.html';
-            } else {
-                alert('Login failed');
-            }
-        });
-    }
-
-    // LOGOUT
-    const logout = document.getElementById('logoutBtn');
-    if (logout) {
-        logout.addEventListener('click', async () => {
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
             await fetch('/api/logout', {
                 method: 'POST',
                 credentials: 'include'
             });
+
             window.location.href = '/login.html';
         });
     }
-
 });
 
 
+// ================= DASHBOARD =================
+
 function initAdminDashboard() {
 
-    const list = document.getElementById('adminDesignList');
-    const form = document.getElementById('designForm');
+    const adminDesignList = document.getElementById('adminDesignList');
+    const addNewBtn = document.getElementById('addNewBtn');
+    const designFormContainer = document.getElementById('designFormContainer');
+    const designForm = document.getElementById('designForm');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const formTitle = document.getElementById('formTitle');
+    const imageHelp = document.getElementById('imageHelp');
 
-    async function load() {
+    let isEditing = false;
+
+    // ================= LOAD DESIGNS =================
+    async function loadDesigns() {
         const res = await fetch('/api/designs', {
             credentials: 'include'
         });
+
         const data = await res.json();
 
-        list.innerHTML = '';
+        adminDesignList.innerHTML = '';
 
-        data.forEach(d => {
+        if (data.length === 0) {
+            adminDesignList.innerHTML = '<p>No designs yet</p>';
+            return;
+        }
+
+        data.forEach(item => {
+
+            const isPdf = item.image_url.toLowerCase().endsWith('.pdf');
+
+            const media = isPdf
+                ? `<div style="width:50px;height:50px;background:#eee;display:flex;align-items:center;justify-content:center;">PDF</div>`
+                : `<img src="${item.image_url}" style="width:50px;height:50px;object-fit:cover;">`;
+
             const div = document.createElement('div');
+            div.className = 'admin-item';
+
             div.innerHTML = `
-                <p>${d.title}</p>
-                <button onclick="deleteDesign(${d.id})">Delete</button>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    ${media}
+                    <strong>${item.title}</strong>
+                </div>
+                <div>
+                    <button class="edit-btn" data-id="${item.id}">Edit</button>
+                    <button class="delete-btn" data-id="${item.id}">Delete</button>
+                </div>
             `;
-            list.appendChild(div);
+
+            adminDesignList.appendChild(div);
+        });
+
+        // ✅ Attach events AFTER render
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.onclick = () => handleEdit(btn.dataset.id);
+        });
+
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.onclick = () => handleDelete(btn.dataset.id);
         });
     }
 
-    load();
+    loadDesigns();
 
-    form.addEventListener('submit', async (e) => {
+    // ================= ADD BUTTON =================
+    addNewBtn.onclick = () => {
+        isEditing = false;
+
+        designForm.reset();
+        document.getElementById('designId').value = '';
+
+        formTitle.textContent = "Add New Design";
+        imageHelp.textContent = "Required";
+
+        designFormContainer.style.display = "block";
+    };
+
+    // ================= CANCEL =================
+    cancelBtn.onclick = () => {
+        designFormContainer.style.display = "none";
+    };
+
+    // ================= SUBMIT =================
+    designForm.onsubmit = async (e) => {
         e.preventDefault();
 
-        const fd = new FormData(form);
+        const id = document.getElementById('designId').value;
+        const formData = new FormData(designForm);
 
-        await fetch('/api/designs', {
-            method: 'POST',
+        if (!isEditing && !formData.get('image')) {
+            alert("Image required");
+            return;
+        }
+
+        const url = isEditing ? `/api/designs/${id}` : `/api/designs`;
+        const method = isEditing ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+            method,
             credentials: 'include',
-            body: fd
+            body: formData
         });
 
-        form.reset();
-        load();
-    });
+        if (res.ok) {
+            designFormContainer.style.display = "none";
+            designForm.reset();
+            loadDesigns();
+        } else {
+            alert("Operation failed");
+        }
+    };
 
-}
+    // ================= EDIT =================
+    async function handleEdit(id) {
+        const res = await fetch(`/api/designs/${id}`, {
+            credentials: 'include'
+        });
 
-async function deleteDesign(id) {
-    await fetch('/api/designs/' + id, {
-        method: 'DELETE',
-        credentials: 'include'
-    });
-    location.reload();
+        const data = await res.json();
+
+        isEditing = true;
+
+        document.getElementById('designId').value = data.id;
+        document.getElementById('title').value = data.title;
+        document.getElementById('description').value = data.description;
+        document.getElementById('category').value = data.category || '';
+
+        formTitle.textContent = "Edit Design";
+        imageHelp.textContent = "Leave empty to keep existing file";
+
+        designFormContainer.style.display = "block";
+    }
+
+    // ================= DELETE =================
+    async function handleDelete(id) {
+        if (!confirm("Are you sure?")) return;
+
+        const res = await fetch(`/api/designs/${id}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+
+        if (res.ok) {
+            loadDesigns();
+        } else {
+            alert("Delete failed");
+        }
+    }
 }
