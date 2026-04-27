@@ -1,4 +1,4 @@
-```javascript name=public/js/admin.js url=https://github.com/Raviteja873/Design-Showcase/blob/main/public/js/admin.js
+// public/js/admin.js
 document.addEventListener('DOMContentLoaded', async () => {
 
     const isLogin = window.location.pathname.endsWith('login.html');
@@ -31,7 +31,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         alert('Invalid credentials');
                     }
 
-                } catch {
+                } catch (err) {
+                    console.error('Login error:', err);
                     alert('Server error');
                 }
             });
@@ -45,7 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 credentials: 'include'
             });
 
-            if (!res.ok) throw new Error();
+            if (!res.ok) throw new Error('Not authenticated');
 
             document.body.style.display = 'block';
 
@@ -55,7 +56,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 initAdminDashboard();
             }
 
-        } catch {
+        } catch (err) {
+            // Redirect to login if not authenticated
+            console.warn('Auth check failed:', err);
             window.location.href = '/login.html';
         }
     }
@@ -65,12 +68,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async () => {
-            await fetch('/api/logout', {
-                method: 'POST',
-                credentials: 'include'
-            });
-
-            window.location.href = '/login.html';
+            try {
+                await fetch('/api/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+            } catch (err) {
+                console.error('Logout error:', err);
+            } finally {
+                window.location.href = '/login.html';
+            }
         });
     }
 });
@@ -79,7 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ================= DASHBOARD =================
 
 function initAdminDashboard() {
-    // Guard against double initialization if called directly
+    // Guard against double initialization if called directly more than once
     if (initAdminDashboard._initialized) return;
     initAdminDashboard._initialized = true;
 
@@ -145,7 +152,6 @@ function initAdminDashboard() {
             }
 
             data.forEach(item => {
-
                 const imageUrl = item.image_url || '';
                 const isPdf = String(imageUrl).toLowerCase().endsWith('.pdf');
 
@@ -210,6 +216,7 @@ function initAdminDashboard() {
             const categoryEl = document.getElementById('category');
             const fileInput = document.getElementById('image');
 
+            // Use files[0] directly for file input
             const file = fileInput && fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
 
             if (!isEditing && !file) {
@@ -312,4 +319,3 @@ function initAdminDashboard() {
     attachListDelegation();
     loadDesigns();
 }
-```
